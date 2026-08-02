@@ -11,6 +11,9 @@ permissions:
 
 jobs:
 
+  # -------------------------
+  # Job 1 : Register Dataset
+  # -------------------------
   register-dataset:
     runs-on: ubuntu-latest
 
@@ -23,7 +26,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install pandas
+          pip install -r tourism_project/requirements.txt
 
       - name: Register Dataset
         run: |
@@ -36,7 +39,10 @@ jobs:
           path: tourism_project/data/tourism.csv
 
 
-  data-prep:
+  # -------------------------
+  # Job 2 : Data Preparation
+  # -------------------------
+  data-preparation:
     needs: register-dataset
     runs-on: ubuntu-latest
 
@@ -49,7 +55,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install pandas scikit-learn
+          pip install -r tourism_project/requirements.txt
 
       - name: Download Dataset
         uses: actions/download-artifact@v4
@@ -57,7 +63,7 @@ jobs:
           name: tourism-data
           path: tourism_project/data
 
-      - name: Data Preparation
+      - name: Prepare Data
         run: |
           python tourism_project/model_building/prep.py
 
@@ -72,8 +78,11 @@ jobs:
             ytest.csv
 
 
+  # -------------------------
+  # Job 3 : Model Training
+  # -------------------------
   model-training:
-    needs: data-prep
+    needs: data-preparation
     runs-on: ubuntu-latest
 
     steps:
@@ -85,7 +94,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install -r .github/requirements.txt
+          pip install -r tourism_project/requirements.txt
 
       - name: Download Train/Test Files
         uses: actions/download-artifact@v4
@@ -96,7 +105,12 @@ jobs:
         run: |
           python tourism_project/model_building/train.py
 
-      - name: Upload Model
+      - name: Verify Model Exists
+        run: |
+          ls -lh tourism_project/deployment/
+          test -f tourism_project/deployment/best_tourism_model.joblib
+
+      - name: Upload Trained Model
         uses: actions/upload-artifact@v4
         with:
           name: trained-model
@@ -104,11 +118,15 @@ jobs:
 
       - name: Commit trained model
         run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
 
           git add tourism_project/deployment/best_tourism_model.joblib
 
-          git commit -m "Update trained model [skip ci]" || echo "Nothing to commit"
+          git diff --cached --quiet && echo "No changes to commit" && exit 0
+
+          git commit -m "Update trained model [skip ci]"
+
+          git pull --rebase origin main
 
           git push
