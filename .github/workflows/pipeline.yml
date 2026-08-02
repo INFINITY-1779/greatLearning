@@ -26,7 +26,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install -r tourism_project/requirements.txt
+          pip install -r tourism_project/deployment/requirements.txt
 
       - name: Register Dataset
         run: |
@@ -55,7 +55,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install -r tourism_project/requirements.txt
+          pip install -r tourism_project/deployment/requirements.txt
 
       - name: Download Dataset
         uses: actions/download-artifact@v4
@@ -94,7 +94,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install -r tourism_project/requirements.txt
+          pip install -r tourism_project/deployment/requirements.txt
 
       - name: Download Train/Test Files
         uses: actions/download-artifact@v4
